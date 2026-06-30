@@ -32,7 +32,8 @@ npm start       # roda continuamente, checando a cada CHECK_INTERVAL_MINUTES
 | `ACTIVE_SOURCES` | não (default `amazon,mercadolivre`) | Fontes ativas, separadas por vírgula |
 | `CATEGORY_KEYWORDS` | não | Palavras-chave (vírgula) pra filtrar por categoria no título; vazio = sem filtro |
 | `AMAZON_AFFILIATE_TAG` | não | Tag do Amazon Associates |
-| `MERCADOLIVRE_AFFILIATE_TAG` | não | Tag do programa de afiliados do Mercado Livre (formato provisório, ajustar quando aprovado) |
+| `MERCADOLIVRE_AFFILIATE_TAG` | não | EXPERIMENTAL — `matt_word` do seu perfil de afiliado (ver Limitações conhecidas) |
+| `MERCADOLIVRE_MATT_TOOL` | não | EXPERIMENTAL — `matt_tool` do seu perfil de afiliado |
 
 ## Rodando em produção (GitHub Actions)
 
@@ -40,11 +41,13 @@ O workflow em `.github/workflows/check-deals.yml` roda `npm run check` a cada 30
 
 Configure em **Settings → Secrets and variables → Actions**:
 
-- **Secrets**: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_GROUP_CHAT_ID`, `REDIS_URL`, `AMAZON_AFFILIATE_TAG`, `MERCADOLIVRE_AFFILIATE_TAG`
+- **Secrets**: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_GROUP_CHAT_ID`, `REDIS_URL`, `AMAZON_AFFILIATE_TAG`, `MERCADOLIVRE_AFFILIATE_TAG`, `MERCADOLIVRE_MATT_TOOL`
 - **Variables**: `DEAL_DISCOUNT_THRESHOLD`, `ACTIVE_SOURCES`, `CATEGORY_KEYWORDS`
+
+Se uma secret não tiver valor real, **não a crie** — o GitHub não aceita salvar secret vazia, e um placeholder tipo `''` é lido como valor de verdade (ver `src/lib/env.ts`).
 
 ## Limitações conhecidas
 
 - Magalu está temporariamente fora: o site bloqueia o scraping mesmo com as mesmas técnicas que funcionam pra Amazon e Mercado Livre.
-- Os links de afiliado do Mercado Livre usam um formato provisório até a aprovação real no programa.
+- **Link de afiliado do Mercado Livre é experimental e não confirmado.** O link "oficial" gerado pela ferramenta deles aponta para um endereço genérico (`/social/{usuario}`) com o produto codificado num token assinado pelo servidor (`ref=`), que não é reproduzível sem chamar a API interna deles — algo que decidimos não automatizar por violar os termos do programa de afiliados e arriscar suspensão da conta. Em vez disso, o código testa anexar `matt_word`/`matt_tool` direto na URL do produto; **isso pode não contar para comissão** — confirme no seu painel de afiliado antes de depender disso. Se não funcionar, a alternativa é postar as promoções do Mercado Livre sem link de afiliado, ou gerar os links manualmente em lote de tempos em tempos.
 - Scraping de páginas de e-commerce é inerentemente frágil — mudanças no HTML dos sites podem quebrar os seletores e exigir manutenção.
