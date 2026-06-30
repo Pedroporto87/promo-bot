@@ -1,0 +1,33 @@
+name: Checar promoções
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run check
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_GROUP_CHAT_ID: ${{ secrets.TELEGRAM_GROUP_CHAT_ID }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          AMAZON_AFFILIATE_TAG: ${{ secrets.AMAZON_AFFILIATE_TAG }}
+          MERCADOLIVRE_AFFILIATE_TAG: ${{ secrets.MERCADOLIVRE_AFFILIATE_TAG }}
+          DEAL_DISCOUNT_THRESHOLD: ${{ vars.DEAL_DISCOUNT_THRESHOLD }}
+          ACTIVE_SOURCES: ${{ vars.ACTIVE_SOURCES }}
+          CATEGORY_KEYWORDS: ${{ vars.CATEGORY_KEYWORDS }}

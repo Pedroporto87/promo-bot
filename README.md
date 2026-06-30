@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# promo-bot
 
-## Getting Started
+Worker que monitora promoções na Amazon e no Mercado Livre, filtra por desconto mínimo e categoria, e posta automaticamente num grupo do Telegram com link de afiliado.
 
-First, run the development server:
+## Como funciona
+
+- `src/lib/scrapers/` — raspa as páginas de ofertas da Amazon e do Mercado Livre via Playwright.
+- `src/lib/deals/detect.ts` — calcula o % de desconto e aplica o limite mínimo (`DEAL_DISCOUNT_THRESHOLD`).
+- `src/lib/deals/category-filter.ts` — filtra por palavra-chave no título (`CATEGORY_KEYWORDS`).
+- `src/lib/dedup.ts` — usa Redis (com TTL) pra não postar a mesma promoção repetidamente.
+- `src/lib/telegram.ts` — posta a promoção formatada no grupo configurado.
+
+## Rodando
+
+Copie `.env.example` para `.env` e preencha as variáveis (veja abaixo).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx playwright install chromium
+npm run check   # roda uma checagem única e sai
+npm start       # roda continuamente, checando a cada CHECK_INTERVAL_MINUTES
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variáveis de ambiente
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variável | Obrigatória | Descrição |
+| --- | --- | --- |
+| `TELEGRAM_BOT_TOKEN` | sim | Token do bot, via @BotFather |
+| `TELEGRAM_GROUP_CHAT_ID` | sim | ID do grupo onde as promoções são postadas |
+| `REDIS_URL` | recomendada | Sem isso, não há dedup — a mesma promoção pode ser postada de novo a cada checagem |
+| `DEAL_DISCOUNT_THRESHOLD` | não (default 40) | % mínimo de desconto pra considerar relevante |
+| `ACTIVE_SOURCES` | não (default `amazon,mercadolivre`) | Fontes ativas, separadas por vírgula |
+| `CATEGORY_KEYWORDS` | não | Palavras-chave (vírgula) pra filtrar por categoria no título; vazio = sem filtro |
+| `AMAZON_AFFILIATE_TAG` | não | Tag do Amazon Associates |
+| `MERCADOLIVRE_AFFILIATE_TAG` | não | Tag do programa de afiliados do Mercado Livre (formato provisório, ajustar quando aprovado) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Rodando em produção (GitHub Actions)
 
-## Learn More
+O workflow em `.github/workflows/check-deals.yml` roda `npm run check` a cada 30 minutos via cron do GitHub Actions — não precisa de servidor próprio.
 
-To learn more about Next.js, take a look at the following resources:
+Configure em **Settings → Secrets and variables → Actions**:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Secrets**: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_GROUP_CHAT_ID`, `REDIS_URL`, `AMAZON_AFFILIATE_TAG`, `MERCADOLIVRE_AFFILIATE_TAG`
+- **Variables**: `DEAL_DISCOUNT_THRESHOLD`, `ACTIVE_SOURCES`, `CATEGORY_KEYWORDS`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Limitações conhecidas
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Magalu está temporariamente fora: o site bloqueia o scraping mesmo com as mesmas técnicas que funcionam pra Amazon e Mercado Livre.
+- Os links de afiliado do Mercado Livre usam um formato provisório até a aprovação real no programa.
+- Scraping de páginas de e-commerce é inerentemente frágil — mudanças no HTML dos sites podem quebrar os seletores e exigir manutenção.
