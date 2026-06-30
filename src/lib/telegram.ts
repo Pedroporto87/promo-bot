@@ -1,11 +1,12 @@
 import TelegramBot from "node-telegram-bot-api";
 
+import { getEnv } from "@/lib/env";
 import type { EvaluatedDeal } from "@/lib/types";
 
 let bot: TelegramBot | null = null;
 
 function getBot() {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = getEnv("TELEGRAM_BOT_TOKEN");
   if (!token) throw new Error("TELEGRAM_BOT_TOKEN não configurado.");
   if (!bot) bot = new TelegramBot(token);
   return bot;
@@ -31,7 +32,7 @@ function formatCaption(deal: EvaluatedDeal, affiliateUrl: string) {
 }
 
 export async function sendDealToTelegram(deal: EvaluatedDeal, affiliateUrl: string) {
-  const chatId = process.env.TELEGRAM_GROUP_CHAT_ID;
+  const chatId = getEnv("TELEGRAM_GROUP_CHAT_ID");
   if (!chatId) throw new Error("TELEGRAM_GROUP_CHAT_ID não configurado.");
 
   const telegram = getBot();

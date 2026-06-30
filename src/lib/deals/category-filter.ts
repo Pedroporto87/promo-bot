@@ -1,3 +1,5 @@
+import { getEnv } from "@/lib/env";
+
 const DIACRITICS_PATTERN = /[̀-ͯ]/g;
 
 function normalize(text: string): string {
@@ -5,7 +7,7 @@ function normalize(text: string): string {
 }
 
 function getKeywords(): string[] {
-  const raw = process.env.CATEGORY_KEYWORDS;
+  const raw = getEnv("CATEGORY_KEYWORDS");
   if (!raw) return [];
   return raw
     .split(",")

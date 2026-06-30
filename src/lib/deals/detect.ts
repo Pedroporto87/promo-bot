@@ -1,3 +1,4 @@
+import { getEnv } from "@/lib/env";
 import type { RawDeal } from "@/lib/types";
 
 const DEFAULT_THRESHOLD = 40;
@@ -7,9 +8,8 @@ export function evaluateDiscount(raw: RawDeal): number | null {
   if (!raw.originalPrice || raw.originalPrice <= raw.currentPrice) return null;
 
   const discountPercent = ((raw.originalPrice - raw.currentPrice) / raw.originalPrice) * 100;
-  const threshold = process.env.DEAL_DISCOUNT_THRESHOLD
-    ? Number(process.env.DEAL_DISCOUNT_THRESHOLD)
-    : DEFAULT_THRESHOLD;
+  const rawThreshold = getEnv("DEAL_DISCOUNT_THRESHOLD");
+  const threshold = rawThreshold ? Number(rawThreshold) : DEFAULT_THRESHOLD;
 
   return discountPercent >= threshold ? discountPercent : null;
 }

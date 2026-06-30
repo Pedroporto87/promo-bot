@@ -2,6 +2,7 @@ import { buildAffiliateUrl } from "@/lib/deals/affiliate";
 import { matchesCategoryFilter } from "@/lib/deals/category-filter";
 import { evaluateDiscount } from "@/lib/deals/detect";
 import { getLastNotifiedPrice, markNotified } from "@/lib/dedup";
+import { getEnv } from "@/lib/env";
 import { scrapeAmazonDeals } from "@/lib/scrapers/amazon";
 import { scrapeMercadoLivreDeals } from "@/lib/scrapers/mercadolivre";
 import { SOURCES, type SourceConfig } from "@/lib/sources";
@@ -51,7 +52,7 @@ async function checkSource(source: SourceConfig) {
 }
 
 export async function checkAllSources() {
-  if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_GROUP_CHAT_ID) {
+  if (!getEnv("TELEGRAM_BOT_TOKEN") || !getEnv("TELEGRAM_GROUP_CHAT_ID")) {
     throw new Error("TELEGRAM_BOT_TOKEN / TELEGRAM_GROUP_CHAT_ID não configurados.");
   }
 

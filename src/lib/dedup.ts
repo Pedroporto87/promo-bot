@@ -1,5 +1,6 @@
 import IORedis from "ioredis";
 
+import { getEnv } from "@/lib/env";
 import type { SourceSlug } from "@/lib/types";
 
 // Deals like "Oferta do Dia" reset daily; 48h is enough to avoid re-posting
@@ -9,7 +10,7 @@ const DEDUP_TTL_SECONDS = 60 * 60 * 48;
 let client: IORedis | null = null;
 
 function getClient() {
-  const url = process.env.REDIS_URL;
+  const url = getEnv("REDIS_URL");
   if (!url) return null;
   if (!client) {
     client = new IORedis(url, { maxRetriesPerRequest: null });
