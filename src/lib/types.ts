@@ -6,6 +6,8 @@ export type RawDeal = {
   currentPrice: number;
   originalPrice: number | null;
   currency: string;
+  // Lomadee only: brand org id, needed to generate the tracked affiliate link.
+  organizationId?: string;
 };
 
 export type EvaluatedDeal = RawDeal & {
@@ -14,4 +16,4 @@ export type EvaluatedDeal = RawDeal & {
   sourceName: string;
 };
 
-export type SourceSlug = "amazon" | "magalu";
+export type SourceSlug = "amazon" | "lomadee";

@@ -27,7 +27,8 @@ jobs:
           TELEGRAM_GROUP_CHAT_ID: ${{ secrets.TELEGRAM_GROUP_CHAT_ID }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
           AMAZON_AFFILIATE_TAG: ${{ secrets.AMAZON_AFFILIATE_TAG }}
-          MAGALU_STORE_NAME: ${{ secrets.MAGALU_STORE_NAME }}
+          LOMADEE_API_KEY: ${{ secrets.LOMADEE_API_KEY }}
           DEAL_DISCOUNT_THRESHOLD: ${{ vars.DEAL_DISCOUNT_THRESHOLD }}
           ACTIVE_SOURCES: ${{ vars.ACTIVE_SOURCES }}
           CATEGORY_KEYWORDS: ${{ vars.CATEGORY_KEYWORDS }}
+          LOMADEE_ORGANIZATION_IDS: ${{ vars.LOMADEE_ORGANIZATION_IDS }}

@@ -1,26 +1,22 @@
+import { buildLomadeeAffiliateUrl } from "@/lib/scrapers/lomadee";
 import type { SourceConfig } from "@/lib/sources";
+import type { RawDeal } from "@/lib/types";
 
 /**
- * Builds the affiliate URL for the given source.
+ * Builds the affiliate URL for a deal.
  *
- * Amazon: appends ?tag={affiliateTag} to the product URL.
- *
- * Magalu / Magazine Você: replaces the domain with magazinevoce.com.br/{storeName}.
- *   e.g. magazineluiza.com.br/slug/p/sku/cat/sub/
- *     → magazinevoce.com.br/magazinepromoquente40/slug/p/sku/cat/sub/
+ * Amazon: appends ?tag={affiliateTag} (documented Associates format).
+ * Lomadee: generates a tracked short link via the Lomadee shortener API (async).
  */
-export function buildAffiliateUrl(url: string, source: SourceConfig): string {
-  if (!source.affiliateTag) return url;
-
+export async function buildAffiliateUrl(deal: RawDeal, source: SourceConfig): Promise<string> {
   switch (source.slug) {
     case "amazon": {
-      const withTag = new URL(url);
+      if (!source.affiliateTag) return deal.url;
+      const withTag = new URL(deal.url);
       withTag.searchParams.set("tag", source.affiliateTag);
       return withTag.toString();
     }
-    case "magalu": {
-      const magaluUrl = new URL(url);
-      return `https://www.magazinevoce.com.br/${source.affiliateTag}${magaluUrl.pathname}`;
-    }
+    case "lomadee":
+      return buildLomadeeAffiliateUrl(deal);
   }
 }

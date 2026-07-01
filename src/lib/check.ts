@@ -4,14 +4,14 @@ import { evaluateDiscount } from "@/lib/deals/detect";
 import { getLastNotifiedPrice, isDedupActive, markNotified, shouldNotify } from "@/lib/dedup";
 import { getEnv } from "@/lib/env";
 import { scrapeAmazonDeals } from "@/lib/scrapers/amazon";
-import { scrapeMagaluDeals } from "@/lib/scrapers/magalu";
+import { fetchLomadeeDeals } from "@/lib/scrapers/lomadee";
 import { SOURCES, type SourceConfig } from "@/lib/sources";
 import { sendDealToTelegram } from "@/lib/telegram";
 import type { RawDeal } from "@/lib/types";
 
 const SCRAPERS: Record<SourceConfig["slug"], () => Promise<RawDeal[]>> = {
   amazon: scrapeAmazonDeals,
-  magalu: scrapeMagaluDeals,
+  lomadee: fetchLomadeeDeals,
 };
 
 async function checkSource(source: SourceConfig) {
@@ -36,7 +36,7 @@ async function checkSource(source: SourceConfig) {
     const lastNotifiedPrice = await getLastNotifiedPrice(source.slug, raw.externalId);
     if (!shouldNotify(raw.currentPrice, lastNotifiedPrice)) continue;
 
-    const affiliateUrl = buildAffiliateUrl(raw.url, source);
+    const affiliateUrl = await buildAffiliateUrl(raw, source);
 
     try {
       await sendDealToTelegram(
