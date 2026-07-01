@@ -14,4 +14,4 @@ export type EvaluatedDeal = RawDeal & {
   sourceName: string;
 };
 
-export type SourceSlug = "amazon" | "mercadolivre";
+export type SourceSlug = "amazon" | "magalu";

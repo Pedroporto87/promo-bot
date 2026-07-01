@@ -10,7 +10,7 @@ export type SourceConfig = {
 
 function parseActiveSources(): Set<SourceSlug> {
   const raw = getEnv("ACTIVE_SOURCES");
-  if (!raw) return new Set<SourceSlug>(["amazon", "mercadolivre"]);
+  if (!raw) return new Set<SourceSlug>(["amazon", "magalu"]);
   return new Set(raw.split(",").map((s) => s.trim()) as SourceSlug[]);
 }
 
@@ -24,9 +24,9 @@ export const SOURCES: SourceConfig[] = [
     affiliateTag: getEnv("AMAZON_AFFILIATE_TAG"),
   },
   {
-    slug: "mercadolivre",
-    name: "Mercado Livre",
-    isActive: activeSlugs.has("mercadolivre"),
-    affiliateTag: getEnv("MERCADOLIVRE_AFFILIATE_TAG"),
+    slug: "magalu",
+    name: "Magazine Luiza",
+    isActive: activeSlugs.has("magalu"),
+    affiliateTag: getEnv("MAGALU_STORE_NAME"),
   },
 ];

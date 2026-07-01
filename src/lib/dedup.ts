@@ -3,9 +3,13 @@ import IORedis from "ioredis";
 import { getEnv } from "@/lib/env";
 import type { SourceSlug } from "@/lib/types";
 
-// Deals like "Oferta do Dia" reset daily; 48h is enough to avoid re-posting
-// the same listing across consecutive worker runs without growing forever.
-const DEDUP_TTL_SECONDS = 60 * 60 * 48;
+// 7 days — long enough that the same deal won't resurface after a Redis expiry
+// within a typical promotional campaign cycle.
+const DEDUP_TTL_SECONDS = 60 * 60 * 24 * 7;
+
+// Minimum additional price drop (relative) required to re-notify about the same deal.
+// e.g. 0.05 = only re-post if the new price is at least 5% lower than the last notified price.
+const MIN_PRICE_DROP_RATIO = 0.05;
 
 let client: IORedis | null = null;
 
@@ -33,7 +37,17 @@ export async function getLastNotifiedPrice(
   return value === null ? null : Number(value);
 }
 
-/** Records that we notified about this deal at this price, so we don't repeat it until the price drops further. */
+/**
+ * Returns true if the current price is low enough to warrant a new notification.
+ * Requires a minimum drop of MIN_PRICE_DROP_RATIO relative to the last notified price
+ * to avoid re-posting the same deal with trivial price fluctuations (e.g. R$0.01 difference).
+ */
+export function shouldNotify(currentPrice: number, lastNotifiedPrice: number | null): boolean {
+  if (lastNotifiedPrice === null) return true;
+  return currentPrice <= lastNotifiedPrice * (1 - MIN_PRICE_DROP_RATIO);
+}
+
+/** Records that we notified about this deal at this price. Resets the 7-day TTL. */
 export async function markNotified(
   sourceSlug: SourceSlug,
   externalId: string,

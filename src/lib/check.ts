@@ -1,17 +1,17 @@
 import { buildAffiliateUrl } from "@/lib/deals/affiliate";
 import { matchesCategoryFilter } from "@/lib/deals/category-filter";
 import { evaluateDiscount } from "@/lib/deals/detect";
-import { getLastNotifiedPrice, markNotified } from "@/lib/dedup";
+import { getLastNotifiedPrice, markNotified, shouldNotify } from "@/lib/dedup";
 import { getEnv } from "@/lib/env";
 import { scrapeAmazonDeals } from "@/lib/scrapers/amazon";
-import { scrapeMercadoLivreDeals } from "@/lib/scrapers/mercadolivre";
+import { scrapeMagaluDeals } from "@/lib/scrapers/magalu";
 import { SOURCES, type SourceConfig } from "@/lib/sources";
 import { sendDealToTelegram } from "@/lib/telegram";
 import type { RawDeal } from "@/lib/types";
 
 const SCRAPERS: Record<SourceConfig["slug"], () => Promise<RawDeal[]>> = {
   amazon: scrapeAmazonDeals,
-  mercadolivre: scrapeMercadoLivreDeals,
+  magalu: scrapeMagaluDeals,
 };
 
 async function checkSource(source: SourceConfig) {
@@ -34,7 +34,7 @@ async function checkSource(source: SourceConfig) {
     if (discountPercent === null) continue;
 
     const lastNotifiedPrice = await getLastNotifiedPrice(source.slug, raw.externalId);
-    if (lastNotifiedPrice !== null && raw.currentPrice >= lastNotifiedPrice) continue;
+    if (!shouldNotify(raw.currentPrice, lastNotifiedPrice)) continue;
 
     const affiliateUrl = buildAffiliateUrl(raw.url, source);
 
