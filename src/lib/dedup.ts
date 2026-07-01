@@ -22,6 +22,11 @@ function getClient() {
   return client;
 }
 
+/** True when a Redis URL is configured, i.e. dedup will actually persist across runs. */
+export function isDedupActive(): boolean {
+  return getEnv("REDIS_URL") !== null;
+}
+
 function dedupKey(sourceSlug: SourceSlug, externalId: string) {
   return `deal:notified:${sourceSlug}:${externalId}`;
 }

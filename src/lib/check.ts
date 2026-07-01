@@ -1,7 +1,7 @@
 import { buildAffiliateUrl } from "@/lib/deals/affiliate";
 import { matchesCategoryFilter } from "@/lib/deals/category-filter";
 import { evaluateDiscount } from "@/lib/deals/detect";
-import { getLastNotifiedPrice, markNotified, shouldNotify } from "@/lib/dedup";
+import { getLastNotifiedPrice, isDedupActive, markNotified, shouldNotify } from "@/lib/dedup";
 import { getEnv } from "@/lib/env";
 import { scrapeAmazonDeals } from "@/lib/scrapers/amazon";
 import { scrapeMagaluDeals } from "@/lib/scrapers/magalu";
@@ -56,8 +56,19 @@ export async function checkAllSources() {
     throw new Error("TELEGRAM_BOT_TOKEN / TELEGRAM_GROUP_CHAT_ID não configurados.");
   }
 
+  if (!isDedupActive()) {
+    console.warn(
+      "[worker] AVISO: REDIS_URL não configurado — dedup DESATIVADO. " +
+        "As mesmas promoções serão repostadas a cada execução. " +
+        "Configure o secret REDIS_URL no GitHub Actions para corrigir."
+    );
+  }
+
   const activeSources = SOURCES.filter((source) => source.isActive);
-  console.log(`[worker] iniciando checagem de ${activeSources.length} fonte(s)...`);
+  console.log(
+    `[worker] iniciando checagem de ${activeSources.length} fonte(s): ` +
+      `${activeSources.map((s) => s.name).join(", ") || "nenhuma"}.`
+  );
 
   for (const source of activeSources) {
     await checkSource(source);
