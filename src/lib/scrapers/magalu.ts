@@ -53,37 +53,13 @@ export async function scrapeMagaluDeals(): Promise<RawDeal[]> {
     await page.mouse.wheel(0, 3_000);
     await page.waitForTimeout(3_000);
 
+    // IMPORTANT: keep this callback free of NAMED functions. Under tsx/esbuild,
+    // named functions get wrapped with a `__name` helper that doesn't exist in the
+    // browser context, throwing "ReferenceError: __name is not defined". Only inline
+    // anonymous arrows (as call arguments) are safe here.
     const rawCards: RawCard[] = await page.evaluate(() => {
       // Matches "R$ 1.299,00", "1.299,00", "R$1299,00"
       const PRICE_RE = /R?\$?\s*(\d{1,3}(?:\.\d{3})*,\d{2})/g;
-
-      function extractPricesFromText(text: string): number[] {
-        const prices: number[] = [];
-        let m: RegExpExecArray | null;
-        PRICE_RE.lastIndex = 0;
-        while ((m = PRICE_RE.exec(text)) !== null) {
-          const val = Number(m[1].replaceAll(".", "").replace(",", "."));
-          if (val > 0) prices.push(val);
-        }
-        return [...new Set(prices)];
-      }
-
-      function findCardContainer(anchor: HTMLAnchorElement): Element {
-        // Walk up to find the card root: stop at <li>, or at the nearest
-        // ancestor that contains exactly one product link (= one card).
-        let el: Element = anchor;
-        for (let i = 0; i < 8; i++) {
-          const parent = el.parentElement;
-          if (!parent || parent.tagName === "BODY" || parent.tagName === "UL") break;
-          if (parent.tagName === "LI") return parent;
-          if (parent.querySelectorAll('a[href*="/p/"]').length === 1) {
-            el = parent;
-            continue;
-          }
-          break;
-        }
-        return el;
-      }
 
       const anchors = Array.from(
         document.querySelectorAll<HTMLAnchorElement>('a[href*="/p/"]')
@@ -98,7 +74,23 @@ export async function scrapeMagaluDeals(): Promise<RawDeal[]> {
         if (!skuMatch || seen.has(skuMatch[1])) continue;
         seen.add(skuMatch[1]);
 
-        const card = findCardContainer(anchor);
+        // Walk up to the card root: stop at <li>, or at the nearest ancestor
+        // that contains exactly one product link (= one card).
+        let card: Element = anchor;
+        for (let i = 0; i < 8; i++) {
+          const parent = card.parentElement;
+          if (!parent || parent.tagName === "BODY" || parent.tagName === "UL") break;
+          if (parent.tagName === "LI") {
+            card = parent;
+            break;
+          }
+          if (parent.querySelectorAll('a[href*="/p/"]').length === 1) {
+            card = parent;
+            continue;
+          }
+          break;
+        }
+
         const img = card.querySelector<HTMLImageElement>("img");
 
         const title =
@@ -107,16 +99,22 @@ export async function scrapeMagaluDeals(): Promise<RawDeal[]> {
           null;
 
         // Extract all BRL prices from the card's full text — no CSS class dependency.
-        const prices = extractPricesFromText(card.textContent ?? "");
+        const priceSet = new Set<number>();
+        let m: RegExpExecArray | null;
+        PRICE_RE.lastIndex = 0;
+        while ((m = PRICE_RE.exec(card.textContent ?? "")) !== null) {
+          const val = Number(m[1].split(".").join("").replace(",", "."));
+          if (val > 0) priceSet.add(val);
+        }
         // Sort ascending: lowest = current (discounted), highest = original
-        prices.sort((a, b) => a - b);
+        const prices = Array.from(priceSet).sort((a, b) => a - b);
 
         results.push({
           href,
           title,
-          imageUrl: img?.getAttribute("src") ?? img?.dataset["src"] ?? null,
+          imageUrl: img?.getAttribute("src") ?? img?.getAttribute("data-src") ?? null,
           currentPrice: prices[0] ?? null,
-          originalPrice: prices.length > 1 ? (prices.at(-1) ?? null) : null,
+          originalPrice: prices.length > 1 ? prices[prices.length - 1] : null,
         });
       }
 
