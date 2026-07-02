@@ -35,6 +35,15 @@ const BASE_KEYWORDS: readonly string[] = [
   "limpa vidro",
   "tira gordura",
   "desentupidor",
+  // Equipamentos de limpeza
+  "aspirador",
+  "aspirador de po",
+  "robo aspirador",
+  "lavadora de alta pressao",
+  "vaporizador",
+  "limpador a vapor",
+  "mop",
+  "esfregao",
   // --- Bem-estar ---
   "higiene",
   "sabonete",
@@ -114,6 +123,14 @@ const BASE_KEYWORDS: readonly string[] = [
   "modelador",
   "finalizador",
   "gel para cabelo",
+  // Aparelhos de beleza/cabelo
+  "secador",
+  "secador de cabelo",
+  "chapinha",
+  "prancha de cabelo",
+  "modelador de cachos",
+  "babyliss",
+  "escova secadora",
 ];
 
 // Cached at module load so we don't re-parse on every product evaluated.
