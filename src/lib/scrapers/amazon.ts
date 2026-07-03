@@ -46,10 +46,13 @@ export async function scrapeAmazonDeals(): Promise<RawDeal[]> {
 
     await page.goto(DEALS_URL, { timeout: 30_000, waitUntil: "domcontentloaded" });
     await page.waitForTimeout(4_000);
+    // Scroll repeatedly to lazy-load more deal cards (bigger product pool).
     // JS scroll instead of page.mouse.wheel — the latter throws intermittent
     // "Protocol error (Input.dispatchMouseEvent)" in headless chromium.
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await page.waitForTimeout(3_000);
+    for (let i = 0; i < 6; i++) {
+      await page.evaluate(() => window.scrollBy(0, 1600));
+      await page.waitForTimeout(1_500);
+    }
 
     const rawCards: RawCard[] = await page.evaluate(() => {
       const cards = Array.from(document.querySelectorAll("div.dcl-product"));
