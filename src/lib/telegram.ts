@@ -37,8 +37,19 @@ export async function sendDealToTelegram(deal: EvaluatedDeal, affiliateUrl: stri
   const caption = formatCaption(deal, affiliateUrl);
 
   if (deal.imageUrl) {
-    await telegram.sendPhoto(chatId, deal.imageUrl, { caption });
-  } else {
-    await telegram.sendMessage(chatId, caption);
+    try {
+      await telegram.sendPhoto(chatId, deal.imageUrl, { caption });
+      return;
+    } catch (error) {
+      // A imagem pode ser inválida para o Telegram (URL retorna HTML/redirect, formato não suportado,
+      // arquivo grande demais → "wrong type of the web page content"). Não perdemos a oferta: postamos
+      // como texto puro com o link, que é o essencial para a conversão.
+      console.warn(
+        `[telegram] sendPhoto falhou para "${deal.title}", reenviando como texto:`,
+        error instanceof Error ? error.message : error
+      );
+    }
   }
+
+  await telegram.sendMessage(chatId, caption);
 }
