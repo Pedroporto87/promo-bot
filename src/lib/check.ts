@@ -4,6 +4,7 @@ import { evaluateDiscount } from "@/lib/deals/detect";
 import { getLastNotifiedPrice, isDedupActive, markNotified, shouldNotify } from "@/lib/dedup";
 import { getEnv } from "@/lib/env";
 import { scrapeAmazonDeals } from "@/lib/scrapers/amazon";
+import { fetchDoceBelezaDeals } from "@/lib/scrapers/docebeleza";
 import { fetchLomadeeDeals } from "@/lib/scrapers/lomadee";
 import { SOURCES, type SourceConfig } from "@/lib/sources";
 import { sendDealToTelegram } from "@/lib/telegram";
@@ -12,6 +13,7 @@ import type { RawDeal } from "@/lib/types";
 const SCRAPERS: Record<SourceConfig["slug"], () => Promise<RawDeal[]>> = {
   amazon: scrapeAmazonDeals,
   lomadee: fetchLomadeeDeals,
+  docebeleza: fetchDoceBelezaDeals,
 };
 
 const DEFAULT_MAX_POSTS_PER_RUN = 10;
@@ -45,7 +47,7 @@ async function checkSource(source: SourceConfig) {
       break;
     }
 
-    if (!matchesCategoryFilter(raw.title)) continue;
+    if (source.filterByTitle && !matchesCategoryFilter(raw.title)) continue;
 
     const discountPercent = evaluateDiscount(raw);
     if (discountPercent === null) continue;

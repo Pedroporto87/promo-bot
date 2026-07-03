@@ -28,6 +28,7 @@ jobs:
           REDIS_URL: ${{ secrets.REDIS_URL }}
           AMAZON_AFFILIATE_TAG: ${{ secrets.AMAZON_AFFILIATE_TAG }}
           LOMADEE_API_KEY: ${{ secrets.LOMADEE_API_KEY }}
+          AWIN_PUBLISHER_ID: ${{ secrets.AWIN_PUBLISHER_ID }}
           DEAL_DISCOUNT_THRESHOLD: ${{ vars.DEAL_DISCOUNT_THRESHOLD }}
           ACTIVE_SOURCES: ${{ vars.ACTIVE_SOURCES }}
           CATEGORY_KEYWORDS: ${{ vars.CATEGORY_KEYWORDS }}
