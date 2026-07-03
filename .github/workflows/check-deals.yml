@@ -32,3 +32,5 @@ jobs:
           ACTIVE_SOURCES: ${{ vars.ACTIVE_SOURCES }}
           CATEGORY_KEYWORDS: ${{ vars.CATEGORY_KEYWORDS }}
           LOMADEE_ORGANIZATION_IDS: ${{ vars.LOMADEE_ORGANIZATION_IDS }}
+          DEDUP_TTL_HOURS: ${{ vars.DEDUP_TTL_HOURS }}
+          MAX_POSTS_PER_RUN: ${{ vars.MAX_POSTS_PER_RUN }}

@@ -14,6 +14,15 @@ const SCRAPERS: Record<SourceConfig["slug"], () => Promise<RawDeal[]>> = {
   lomadee: fetchLomadeeDeals,
 };
 
+const DEFAULT_MAX_POSTS_PER_RUN = 5;
+
+/** Max deals posted per source per run — spreads content through the day instead of flooding. */
+function getMaxPostsPerRun(): number {
+  const raw = getEnv("MAX_POSTS_PER_RUN");
+  const n = raw ? Number(raw) : DEFAULT_MAX_POSTS_PER_RUN;
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_MAX_POSTS_PER_RUN;
+}
+
 async function checkSource(source: SourceConfig) {
   console.log(`[worker] checando ${source.name}...`);
 
@@ -27,7 +36,15 @@ async function checkSource(source: SourceConfig) {
 
   console.log(`[worker] ${source.name}: ${rawDeals.length} produtos encontrados.`);
 
+  const maxPerRun = getMaxPostsPerRun();
+  let posted = 0;
+
   for (const raw of rawDeals) {
+    if (posted >= maxPerRun) {
+      console.log(`[worker] ${source.name}: limite de ${maxPerRun} posts/execução atingido.`);
+      break;
+    }
+
     if (!matchesCategoryFilter(raw.title)) continue;
 
     const discountPercent = evaluateDiscount(raw);
@@ -44,6 +61,7 @@ async function checkSource(source: SourceConfig) {
         affiliateUrl
       );
       await markNotified(source.slug, raw.externalId, raw.currentPrice);
+      posted++;
       console.log(`[worker] postado: ${raw.title} (${discountPercent.toFixed(0)}% off)`);
     } catch (error) {
       console.error(`[worker] falha ao postar no Telegram (${raw.title}):`, error);

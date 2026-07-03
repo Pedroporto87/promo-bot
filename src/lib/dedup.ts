@@ -3,12 +3,18 @@ import IORedis from "ioredis";
 import { getEnv } from "@/lib/env";
 import type { SourceSlug } from "@/lib/types";
 
-// 7 days — long enough that the same deal won't resurface after a Redis expiry
-// within a typical promotional campaign cycle.
-const DEDUP_TTL_SECONDS = 60 * 60 * 24 * 7;
+// Re-post window: after this many hours the same deal can be posted again, keeping
+// the channel fresh with daily content. Default ~1 day. Configurable via DEDUP_TTL_HOURS.
+const DEFAULT_TTL_HOURS = 20;
 
-// Minimum additional price drop (relative) required to re-notify about the same deal.
-// e.g. 0.05 = only re-post if the new price is at least 5% lower than the last notified price.
+function getTtlSeconds(): number {
+  const raw = getEnv("DEDUP_TTL_HOURS");
+  const hours = raw ? Number(raw) : DEFAULT_TTL_HOURS;
+  return Math.round((Number.isFinite(hours) && hours > 0 ? hours : DEFAULT_TTL_HOURS) * 3600);
+}
+
+// Minimum additional price drop (relative) to re-notify BEFORE the window expires.
+// e.g. 0.05 = within the window, only re-post if the price dropped at least another 5%.
 const MIN_PRICE_DROP_RATIO = 0.05;
 
 let client: IORedis | null = null;
@@ -52,7 +58,7 @@ export function shouldNotify(currentPrice: number, lastNotifiedPrice: number | n
   return currentPrice <= lastNotifiedPrice * (1 - MIN_PRICE_DROP_RATIO);
 }
 
-/** Records that we notified about this deal at this price. Resets the 7-day TTL. */
+/** Records that we notified about this deal at this price. Resets the re-post window. */
 export async function markNotified(
   sourceSlug: SourceSlug,
   externalId: string,
@@ -60,5 +66,5 @@ export async function markNotified(
 ): Promise<void> {
   const redis = getClient();
   if (!redis) return;
-  await redis.set(dedupKey(sourceSlug, externalId), String(price), "EX", DEDUP_TTL_SECONDS);
+  await redis.set(dedupKey(sourceSlug, externalId), String(price), "EX", getTtlSeconds());
 }
