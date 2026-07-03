@@ -6,7 +6,8 @@ import type { RawDeal } from "@/lib/types";
 const BASE_URL = "https://api.lomadee.com.br";
 
 // Cap pages per run so we respect the 60 req/min rate limit and don't run forever.
-const MAX_PAGES = 3;
+// More pages = larger pool of distinct deals to choose from.
+const MAX_PAGES = 5;
 const PAGE_LIMIT = 100;
 
 type LomadeePricing = { listPrice?: number | null; price?: number | null };

@@ -14,7 +14,7 @@ const SCRAPERS: Record<SourceConfig["slug"], () => Promise<RawDeal[]>> = {
   lomadee: fetchLomadeeDeals,
 };
 
-const DEFAULT_MAX_POSTS_PER_RUN = 5;
+const DEFAULT_MAX_POSTS_PER_RUN = 10;
 
 /** Max deals posted per source per run — spreads content through the day instead of flooding. */
 function getMaxPostsPerRun(): number {
