@@ -3,9 +3,10 @@ import IORedis from "ioredis";
 import { getEnv } from "@/lib/env";
 import type { SourceSlug } from "@/lib/types";
 
-// Re-post window: after this many hours the same deal can be posted again, keeping
-// the channel fresh with daily content. Default ~1 day. Configurable via DEDUP_TTL_HOURS.
-const DEFAULT_TTL_HOURS = 20;
+// Re-post window: after this many hours the same deal can be posted again. Lower =
+// the deal pool rotates back into the channel more often through the day (more
+// frequency). Default 8h (~3x/day). Configurable via DEDUP_TTL_HOURS.
+const DEFAULT_TTL_HOURS = 8;
 
 function getTtlSeconds(): number {
   const raw = getEnv("DEDUP_TTL_HOURS");
