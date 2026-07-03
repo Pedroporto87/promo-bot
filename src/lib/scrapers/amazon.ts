@@ -56,12 +56,14 @@ export async function scrapeAmazonDeals(): Promise<RawDeal[]> {
       return cards.map((card) => {
         const link = card.querySelector<HTMLAnchorElement>("a.dcl-product-link");
         const image = card.querySelector<HTMLImageElement>("img.dcl-dynamic-image");
+        // Title moved from the image alt (now empty) to .dcl-product-label.
+        const label = card.querySelector(".dcl-product-label");
         const current = card.querySelector(".dcl-product-price-new .a-offscreen");
         const previous = card.querySelector(".dcl-product-price-old .a-offscreen");
 
         return {
           href: link?.getAttribute("href") ?? null,
-          title: image?.getAttribute("alt") ?? null,
+          title: label?.textContent?.trim() || image?.getAttribute("alt") || null,
           imageUrl: image?.getAttribute("src") ?? null,
           currentLabel: current?.textContent ?? null,
           previousLabel: previous?.textContent ?? null,
