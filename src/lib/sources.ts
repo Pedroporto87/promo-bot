@@ -30,7 +30,7 @@ export const SOURCES: SourceConfig[] = [
     affiliateTag: getEnv("AMAZON_AFFILIATE_TAG"),
     // Search is already scoped to the beauty department (i=beauty), so every result fits the niche.
     filterByTitle: false,
-    maxPostsPerRun: 15, // fonte prioritária — paga melhor, mais regular, entrega mais segura
+    maxPostsPerRun: 20, // fonte prioritária — paga melhor, mais regular, entrega mais segura
   },
   {
     slug: "lomadee",
@@ -38,7 +38,7 @@ export const SOURCES: SourceConfig[] = [
     isActive: activeSlugs.has("lomadee"),
     affiliateTag: getEnv("LOMADEE_API_KEY"),
     filterByTitle: true,
-    maxPostsPerRun: 10,
+    maxPostsPerRun: 5,
   },
   {
     slug: "docebeleza",
