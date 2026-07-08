@@ -38,7 +38,7 @@ async function checkSource(source: SourceConfig) {
 
   console.log(`[worker] ${source.name}: ${rawDeals.length} produtos encontrados.`);
 
-  const maxPerRun = getMaxPostsPerRun();
+  const maxPerRun = source.maxPostsPerRun ?? getMaxPostsPerRun();
   let posted = 0;
 
   for (const raw of rawDeals) {

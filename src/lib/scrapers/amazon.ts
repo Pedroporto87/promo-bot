@@ -2,13 +2,17 @@ import { chromium } from "playwright";
 
 import type { RawDeal } from "@/lib/types";
 
-const DEALS_URL = "https://www.amazon.com.br/deals";
+// Beauty department (i=beauty) already discounted (p_n_deal_type). Scoping the search to the beauty
+// index gives a niche-only pool of real deals — far better yield than the generic /deals page (whose
+// DOM also drifts). k=beleza just seeds the ranking; the department + deal filter do the real work.
+const SEARCH_URL =
+  "https://www.amazon.com.br/s?k=beleza&i=beauty&rh=p_n_deal_type%3A26908755011";
 
 const DESKTOP_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 type RawCard = {
-  href: string | null;
+  asin: string | null;
   title: string | null;
   imageUrl: string | null;
   currentLabel: string | null;
@@ -24,12 +28,7 @@ function parseBrlAmount(label: string | null): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
-function extractAsin(href: string): string | null {
-  const match = href.match(/\/dp\/([A-Z0-9]{10})/);
-  return match ? match[1] : null;
-}
-
-/** Scrapes amazon.com.br/deals (Ofertas do Dia). Cards load lazily, so a scroll is required before reading the DOM. */
+/** Scrapes amazon.com.br beauty search filtered to deals. Results load lazily, so a scroll is required. */
 export async function scrapeAmazonDeals(): Promise<RawDeal[]> {
   const browser = await chromium.launch({ args: ["--disable-blink-features=AutomationControlled"] });
 
@@ -44,29 +43,27 @@ export async function scrapeAmazonDeals(): Promise<RawDeal[]> {
       Object.defineProperty(navigator, "webdriver", { get: () => undefined });
     });
 
-    await page.goto(DEALS_URL, { timeout: 30_000, waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(4_000);
-    // Scroll repeatedly to lazy-load more deal cards (bigger product pool).
-    // JS scroll instead of page.mouse.wheel — the latter throws intermittent
-    // "Protocol error (Input.dispatchMouseEvent)" in headless chromium.
-    for (let i = 0; i < 6; i++) {
+    await page.goto(SEARCH_URL, { timeout: 30_000, waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(3_000);
+    // Scroll to lazy-load the full result grid. JS scroll instead of page.mouse.wheel — the latter
+    // throws intermittent "Protocol error (Input.dispatchMouseEvent)" in headless chromium.
+    for (let i = 0; i < 5; i++) {
       await page.evaluate(() => window.scrollBy(0, 1600));
-      await page.waitForTimeout(1_500);
+      await page.waitForTimeout(1_200);
     }
 
     const rawCards: RawCard[] = await page.evaluate(() => {
-      const cards = Array.from(document.querySelectorAll("div.dcl-product"));
+      const cards = Array.from(document.querySelectorAll("div[data-component-type='s-search-result']"));
       return cards.map((card) => {
-        const link = card.querySelector<HTMLAnchorElement>("a.dcl-product-link");
-        const image = card.querySelector<HTMLImageElement>("img.dcl-dynamic-image");
-        // Title moved from the image alt (now empty) to .dcl-product-label.
-        const label = card.querySelector(".dcl-product-label");
-        const current = card.querySelector(".dcl-product-price-new .a-offscreen");
-        const previous = card.querySelector(".dcl-product-price-old .a-offscreen");
+        const image = card.querySelector<HTMLImageElement>("img.s-image");
+        // Current selling price: the a-price that is NOT a text-price (text-price is the struck list
+        // price or a per-unit reference). Struck list price: a-price[data-a-strike='true'].
+        const current = card.querySelector(".a-price:not(.a-text-price) .a-offscreen");
+        const previous = card.querySelector(".a-price[data-a-strike='true'] .a-offscreen");
 
         return {
-          href: link?.getAttribute("href") ?? null,
-          title: label?.textContent?.trim() || image?.getAttribute("alt") || null,
+          asin: card.getAttribute("data-asin") || null,
+          title: card.querySelector("h2")?.textContent?.trim() || image?.getAttribute("alt") || null,
           imageUrl: image?.getAttribute("src") ?? null,
           currentLabel: current?.textContent ?? null,
           previousLabel: previous?.textContent ?? null,
@@ -76,16 +73,15 @@ export async function scrapeAmazonDeals(): Promise<RawDeal[]> {
 
     const deals: RawDeal[] = [];
     for (const card of rawCards) {
-      if (!card.href || !card.title) continue;
+      if (!card.asin || !card.title) continue;
 
-      const asin = extractAsin(card.href);
       const currentPrice = parseBrlAmount(card.currentLabel);
-      if (!asin || currentPrice === null) continue;
+      if (currentPrice === null) continue;
 
       deals.push({
-        externalId: asin,
+        externalId: card.asin,
         title: card.title,
-        url: `https://www.amazon.com.br/dp/${asin}`,
+        url: `https://www.amazon.com.br/dp/${card.asin}`,
         imageUrl: card.imageUrl,
         currentPrice,
         originalPrice: parseBrlAmount(card.previousLabel),

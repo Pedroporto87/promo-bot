@@ -9,6 +9,9 @@ export type SourceConfig = {
   // Apply the title category-filter? False for curated single-niche sources
   // (e.g. a beauty-only store) where every product already fits the niche.
   filterByTitle: boolean;
+  // Per-source cap of posts per run. Overrides the global MAX_POSTS_PER_RUN.
+  // Amazon gets the most (pays better/faster, safer delivery); Awin the least.
+  maxPostsPerRun?: number;
 };
 
 function parseActiveSources(): Set<SourceSlug> {
@@ -25,7 +28,9 @@ export const SOURCES: SourceConfig[] = [
     name: "Amazon",
     isActive: activeSlugs.has("amazon"),
     affiliateTag: getEnv("AMAZON_AFFILIATE_TAG"),
-    filterByTitle: true,
+    // Search is already scoped to the beauty department (i=beauty), so every result fits the niche.
+    filterByTitle: false,
+    maxPostsPerRun: 15, // fonte prioritária — paga melhor, mais regular, entrega mais segura
   },
   {
     slug: "lomadee",
@@ -33,6 +38,7 @@ export const SOURCES: SourceConfig[] = [
     isActive: activeSlugs.has("lomadee"),
     affiliateTag: getEnv("LOMADEE_API_KEY"),
     filterByTitle: true,
+    maxPostsPerRun: 10,
   },
   {
     slug: "docebeleza",
@@ -40,5 +46,6 @@ export const SOURCES: SourceConfig[] = [
     isActive: activeSlugs.has("docebeleza"),
     affiliateTag: getEnv("AWIN_PUBLISHER_ID"),
     filterByTitle: false, // loja 100% beleza/cosméticos — tudo já é do nicho
+    maxPostsPerRun: 5, // Awin limitado a 5 por run
   },
 ];
