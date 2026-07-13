@@ -35,7 +35,9 @@ export const SOURCES: SourceConfig[] = [
   {
     slug: "lomadee",
     name: "Lomadee",
-    isActive: activeSlugs.has("lomadee"),
+    // PAUSADA à força: não gerar link Lomadee, independente da variável ACTIVE_SOURCES do GitHub
+    // (que ainda pode listar "lomadee"). Reativar: trocar por activeSlugs.has("lomadee").
+    isActive: false,
     affiliateTag: getEnv("LOMADEE_API_KEY"),
     filterByTitle: true,
     maxPostsPerRun: 5,
@@ -43,7 +45,9 @@ export const SOURCES: SourceConfig[] = [
   {
     slug: "docebeleza",
     name: "Doce Beleza",
-    isActive: activeSlugs.has("docebeleza"),
+    // PAUSADA à força: não gerar link Awin, independente da variável ACTIVE_SOURCES do GitHub.
+    // Reativar: trocar por activeSlugs.has("docebeleza").
+    isActive: false,
     affiliateTag: getEnv("AWIN_PUBLISHER_ID"),
     filterByTitle: false, // loja 100% beleza/cosméticos — tudo já é do nicho
     maxPostsPerRun: 5, // Awin limitado a 5 por run
