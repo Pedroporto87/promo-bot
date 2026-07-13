@@ -5,8 +5,17 @@ import type { RawDeal } from "@/lib/types";
 
 // Cosmetics-focused search seeds, all scoped to the beauty department (i=beauty) and already
 // discounted (p_n_deal_type). Kérastase (premium) and Korean skincare are explicit targets; the
-// generic seeds fill variety. Household cleaning never appears because the search is beauty-only.
-const SEARCH_SEEDS = ["kerastase", "skincare coreano", "k-beauty", "cosmeticos", "maquiagem"];
+// generic seeds fill variety; the rest are the salon brands sold on Doce Beleza (Awin) brought into
+// the Amazon portfolio — probed to actually yield deals on Amazon. Household cleaning never appears
+// because the search is beauty-only. More seeds = bigger fresh pool (promos are fleeting).
+const SEARCH_SEEDS = [
+  // cosméticos / coreanos
+  "kerastase", "skincare coreano", "k-beauty", "cosmeticos", "maquiagem",
+  // marcas de salão (portfólio Doce Beleza / Awin)
+  "amend", "wella professionals", "truss cabelos", "aneethun", "alfaparf", "widi care",
+  "sebastian professional", "redken", "loreal professionnel", "salon line", "brae",
+  "forever liss", "cadiveu",
+];
 
 const DESKTOP_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -35,12 +44,13 @@ function parseBrlAmount(label: string | null): number | null {
 /** Scrapes one beauty search page (results load lazily, so a scroll is required). */
 async function scrapeSeed(page: Page, seed: string): Promise<RawDeal[]> {
   await page.goto(searchUrl(seed), { timeout: 30_000, waitUntil: "domcontentloaded" });
-  await page.waitForTimeout(2_500);
+  await page.waitForTimeout(2_000);
   // JS scroll instead of page.mouse.wheel — the latter throws intermittent
-  // "Protocol error (Input.dispatchMouseEvent)" in headless chromium.
-  for (let i = 0; i < 3; i++) {
-    await page.evaluate(() => window.scrollBy(0, 1600));
-    await page.waitForTimeout(1_000);
+  // "Protocol error (Input.dispatchMouseEvent)" in headless chromium. 2 passes is plenty: with
+  // ~18 seeds round-robined, each seed only needs to contribute a few of the ~60 posts.
+  for (let i = 0; i < 2; i++) {
+    await page.evaluate(() => window.scrollBy(0, 2000));
+    await page.waitForTimeout(900);
   }
 
   const rawCards: RawCard[] = await page.evaluate(() => {

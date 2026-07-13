@@ -30,7 +30,7 @@ export const SOURCES: SourceConfig[] = [
     affiliateTag: getEnv("AMAZON_AFFILIATE_TAG"),
     // Search is already scoped to the beauty department (i=beauty), so every result fits the niche.
     filterByTitle: false,
-    maxPostsPerRun: 20, // fonte prioritária — paga melhor, mais regular, entrega mais segura
+    maxPostsPerRun: 60, // única fonte ativa — volume alto p/ compensar promoções momentâneas
   },
   {
     slug: "lomadee",
