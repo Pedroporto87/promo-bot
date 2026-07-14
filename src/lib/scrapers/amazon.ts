@@ -13,6 +13,8 @@ const SEARCH_SEEDS = [
   "kerastase", "skincare coreano", "k-beauty", "cosmeticos", "maquiagem",
   // grandes marcas de público (e-commerces/marcas consolidadas)
   "loreal paris", "nivea", "maybelline", "garnier", "dove", "vichy", "la roche posay", "avene",
+  // linha masculina (barba / grooming)
+  "nivea men", "bozzano", "barba", "oleo para barba", "gillette",
   // marcas de salão (portfólio Doce Beleza / Awin)
   "amend", "wella professionals", "truss cabelos", "aneethun", "alfaparf", "widi care",
   "sebastian professional", "redken", "loreal professionnel", "salon line", "brae",
