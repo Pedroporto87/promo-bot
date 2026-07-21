@@ -7,7 +7,7 @@ import { scrapeAmazonDeals } from "@/lib/scrapers/amazon";
 import { fetchDoceBelezaDeals } from "@/lib/scrapers/docebeleza";
 import { fetchLomadeeDeals } from "@/lib/scrapers/lomadee";
 import { SOURCES, type SourceConfig } from "@/lib/sources";
-import { sendDealToTelegram } from "@/lib/telegram";
+import { sendDealToWhatsApp, validateWhatsAppConfig } from "@/lib/whatsapp";
 import type { RawDeal } from "@/lib/types";
 
 const SCRAPERS: Record<SourceConfig["slug"], () => Promise<RawDeal[]>> = {
@@ -58,7 +58,7 @@ async function checkSource(source: SourceConfig) {
     const affiliateUrl = await buildAffiliateUrl(raw, source);
 
     try {
-      await sendDealToTelegram(
+      await sendDealToWhatsApp(
         { ...raw, discountPercent, sourceSlug: source.slug, sourceName: source.name },
         affiliateUrl
       );
@@ -66,15 +66,13 @@ async function checkSource(source: SourceConfig) {
       posted++;
       console.log(`[worker] postado: ${raw.title} (${discountPercent.toFixed(0)}% off)`);
     } catch (error) {
-      console.error(`[worker] falha ao postar no Telegram (${raw.title}):`, error);
+      console.error(`[worker] falha ao enviar pelo WhatsApp (${raw.title}):`, error);
     }
   }
 }
 
 export async function checkAllSources() {
-  if (!getEnv("TELEGRAM_BOT_TOKEN") || !getEnv("TELEGRAM_GROUP_CHAT_ID")) {
-    throw new Error("TELEGRAM_BOT_TOKEN / TELEGRAM_GROUP_CHAT_ID não configurados.");
-  }
+  await validateWhatsAppConfig();
 
   if (!isDedupActive()) {
     console.warn(

@@ -1,6 +1,7 @@
 import type { Page } from "playwright";
 import { chromium } from "playwright";
 
+import { getEnv } from "@/lib/env";
 import type { RawDeal } from "@/lib/types";
 
 // Cosmetics-focused search seeds, all scoped to the beauty department (i=beauty) and already
@@ -23,6 +24,16 @@ const SEARCH_SEEDS = [
 
 const DESKTOP_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+const DEFAULT_SEARCH_SEED_LIMIT = 5;
+
+function getSearchSeeds() {
+  const configured = Number(getEnv("AMAZON_SEARCH_SEED_LIMIT"));
+  const limit = Number.isInteger(configured) && configured > 0
+    ? configured
+    : DEFAULT_SEARCH_SEED_LIMIT;
+  return SEARCH_SEEDS.slice(0, limit);
+}
 
 function searchUrl(seed: string): string {
   return `https://www.amazon.com.br/s?k=${encodeURIComponent(seed)}&i=beauty&rh=p_n_deal_type%3A26908755011`;
@@ -47,7 +58,7 @@ function parseBrlAmount(label: string | null): number | null {
 
 /** Scrapes one beauty search page (results load lazily, so a scroll is required). */
 async function scrapeSeed(page: Page, seed: string): Promise<RawDeal[]> {
-  await page.goto(searchUrl(seed), { timeout: 30_000, waitUntil: "domcontentloaded" });
+  await page.goto(searchUrl(seed), { timeout: 15_000, waitUntil: "domcontentloaded" });
   await page.waitForTimeout(2_000);
   // JS scroll instead of page.mouse.wheel — the latter throws intermittent
   // "Protocol error (Input.dispatchMouseEvent)" in headless chromium. 2 passes is plenty: with
@@ -130,9 +141,16 @@ export async function scrapeAmazonDeals(): Promise<RawDeal[]> {
       Object.defineProperty(navigator, "webdriver", { get: () => undefined });
     });
 
+    const seeds = getSearchSeeds();
     const perSeed: RawDeal[][] = [];
-    for (const seed of SEARCH_SEEDS) {
-      perSeed.push(await scrapeSeed(page, seed));
+    for (const [index, seed] of seeds.entries()) {
+      console.log(`[amazon] busca ${index + 1}/${seeds.length}: ${seed}`);
+      try {
+        perSeed.push(await scrapeSeed(page, seed));
+      } catch (error) {
+        console.warn(`[amazon] busca falhou para "${seed}"; continuando:`, error);
+        perSeed.push([]);
+      }
     }
 
     return interleaveDedup(perSeed);

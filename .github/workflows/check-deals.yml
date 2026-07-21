@@ -1,8 +1,8 @@
 name: Checar promoções
 
 on:
-  schedule:
-    - cron: "*/30 * * * *"
+  # Baileys precisa de sessão e disco persistentes, que o GitHub Actions não oferece.
+  # Execução automática fica exclusivamente no worker local/VPS.
   workflow_dispatch: {}
 
 jobs:
@@ -23,8 +23,14 @@ jobs:
 
       - run: npm run check
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_GROUP_CHAT_ID: ${{ secrets.TELEGRAM_GROUP_CHAT_ID }}
+          # GitHub Actions não preserva a sessão local do Baileys; produção agendada usa Meta.
+          WHATSAPP_PROVIDER: meta
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_RECIPIENTS: ${{ secrets.WHATSAPP_RECIPIENTS }}
+          WHATSAPP_TEMPLATE_NAME: ${{ vars.WHATSAPP_TEMPLATE_NAME }}
+          WHATSAPP_TEMPLATE_LANGUAGE: ${{ vars.WHATSAPP_TEMPLATE_LANGUAGE }}
+          WHATSAPP_API_VERSION: ${{ vars.WHATSAPP_API_VERSION }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
           AMAZON_AFFILIATE_TAG: ${{ secrets.AMAZON_AFFILIATE_TAG }}
           LOMADEE_API_KEY: ${{ secrets.LOMADEE_API_KEY }}

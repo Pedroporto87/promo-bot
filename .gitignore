@@ -24,10 +24,18 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+/.worker.log
+/.worker-error.log
 
 # local env files
 .env
 .env*.local
+
+# Baileys session keys (equivalent to a logged-in WhatsApp device)
+/.baileys-auth/
+/.baileys-pairing-qr.png
+/.baileys-qr-*.png
+/.baileys-group.json
 
 # vercel
 .vercel

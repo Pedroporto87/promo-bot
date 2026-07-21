@@ -2,10 +2,13 @@ import "dotenv/config";
 
 import { checkAllSources } from "@/lib/check";
 import { getEnv } from "@/lib/env";
+import { validateWhatsAppConfig } from "@/lib/whatsapp";
 
-function main() {
-  if (!getEnv("TELEGRAM_BOT_TOKEN") || !getEnv("TELEGRAM_GROUP_CHAT_ID")) {
-    console.error("[worker] TELEGRAM_BOT_TOKEN / TELEGRAM_GROUP_CHAT_ID não configurados — encerrando.");
+async function main() {
+  try {
+    await validateWhatsAppConfig();
+  } catch (error) {
+    console.error("[worker] WhatsApp não configurado — encerrando:", error);
     process.exit(1);
   }
 
@@ -21,4 +24,7 @@ function main() {
   setInterval(runAndLogErrors, intervalMinutes * 60 * 1000);
 }
 
-main();
+main().catch((error) => {
+  console.error("[worker] falha ao iniciar:", error);
+  process.exit(1);
+});
